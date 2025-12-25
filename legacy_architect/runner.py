@@ -8,6 +8,16 @@ from legacy_architect.artifacts import write_json, write_text, ensure_artifacts_
 from legacy_architect.git_tools import ensure_clean_working_tree, create_branch, get_current_branch
 from legacy_architect.char_tests import generate_characterization_tests, get_test_case_count
 from legacy_architect.test_runner import run_tests_default_mode, run_tests_v2_mode, run_dual_mode_tests, count_test_results
+from legacy_architect.gemini_client import generate_json, generate_code, generate_text
+from legacy_architect.prompts import (
+    PLANNER_SYSTEM_PROMPT, PATCHER_SYSTEM_PROMPT, FIXER_SYSTEM_PROMPT,
+    get_planner_prompt, get_patcher_prompt, get_fixer_prompt
+)
+from legacy_architect.patching import (
+    read_file_content, apply_refactored_code, save_diff_artifact,
+    validate_python_syntax, backup_file
+)
+from legacy_architect.evidence import generate_evidence_report
 
 
 # Agent workflow steps
@@ -150,51 +160,196 @@ def run_agent(
             return False
         
         # ============================================================
-        # STEP 6: Generate refactoring plan
+        # STEP 6: Generate refactoring plan with Gemini
         # ============================================================
-        print_step(6, total_steps, "Generating refactoring plan...")
+        print_step(6, total_steps, "Generating refactoring plan with Gemini...")
         
-        # Placeholder - will be implemented in Phase 4
-        print("📝 TODO: Implement Gemini integration for planning")
-        print("   (Will be added in Phase 4)")
+        # Read the original code
+        original_code = read_file_content(target_file)
+        
+        # Get call sites for context
+        call_sites = [site["file"] for site in impact_map.get("call_sites", [])]
+        call_sites += [site["file"] for site in impact_map.get("other_files", []) if "app/" in site["file"]]
+        
+        # Generate the plan
+        planner_prompt = get_planner_prompt(original_code, symbol, call_sites)
+        
+        try:
+            plan = generate_json(
+                prompt=planner_prompt,
+                system_instruction=PLANNER_SYSTEM_PROMPT,
+                temperature=0.3
+            )
+            write_json("plan.json", plan)
+            print(f"✅ Refactoring plan generated")
+            print(f"   Summary: {plan.get('summary', 'N/A')[:80]}...")
+            print(f"   Issues found: {len(plan.get('issues', []))}")
+            print(f"   Improvements planned: {len(plan.get('improvements', []))}")
+        except Exception as e:
+            print(f"❌ Failed to generate plan: {e}")
+            return False
         
         # ============================================================
         # STEP 7: Apply refactored code
         # ============================================================
-        print_step(7, total_steps, "Applying refactored code...")
+        print_step(7, total_steps, "Generating and applying refactored code...")
         
-        # Placeholder - will be implemented in Phase 4
-        print("📝 TODO: Implement code patching")
-        print("   (Will be added in Phase 4)")
+        # Create backup
+        backup_path = backup_file(target_file)
+        
+        # Generate refactored code
+        patcher_prompt = get_patcher_prompt(original_code, symbol, plan)
+        
+        try:
+            refactored_code = generate_code(
+                prompt=patcher_prompt,
+                system_instruction=PATCHER_SYSTEM_PROMPT,
+                temperature=0.2
+            )
+            
+            # Validate syntax
+            is_valid, error = validate_python_syntax(refactored_code)
+            if not is_valid:
+                print(f"⚠️  Generated code has syntax error: {error}")
+                print("   Requesting fix from Gemini...")
+                # Try to fix syntax
+                fix_prompt = f"Fix this Python syntax error: {error}\n\nCode:\n```python\n{refactored_code}\n```"
+                refactored_code = generate_code(prompt=fix_prompt, temperature=0.1)
+                is_valid, error = validate_python_syntax(refactored_code)
+                if not is_valid:
+                    print(f"❌ Could not fix syntax error: {error}")
+                    return False
+            
+            # Save diff
+            save_diff_artifact(original_code, refactored_code, target_file)
+            
+            # Apply the code
+            success, message = apply_refactored_code(target_file, refactored_code)
+            if success:
+                print(f"✅ Refactored code applied to {target_file}")
+            else:
+                print(f"❌ Failed to apply code: {message}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed to generate refactored code: {e}")
+            return False
         
         # ============================================================
-        # STEP 8: Run tests (both modes)
+        # STEP 8: Run tests (both modes) with fix loop
         # ============================================================
-        print_step(8, total_steps, "Running tests (both modes)...")
+        print_step(8, total_steps, "Running tests in both modes...")
         
-        # Placeholder - will be implemented in Phase 4
-        print("📝 TODO: Implement dual-mode testing")
-        print("   (Will be added in Phase 4)")
+        iteration = 0
+        max_fix_iterations = max_iterations
+        
+        while iteration < max_fix_iterations:
+            iteration += 1
+            print(f"\n   --- Iteration {iteration}/{max_fix_iterations} ---")
+            
+            # Run tests in default mode
+            print("   Running DEFAULT mode tests...")
+            default_success, default_log = run_tests_default_mode()
+            default_counts = count_test_results(default_log)
+            
+            # Run tests in V2 mode
+            print("   Running BILLING_V2 mode tests...")
+            v2_success, v2_log = run_tests_v2_mode()
+            v2_counts = count_test_results(v2_log)
+            
+            print(f"   DEFAULT: {default_counts['passed']} passed, {default_counts['failed']} failed")
+            print(f"   V2:      {v2_counts['passed']} passed, {v2_counts['failed']} failed")
+            
+            # Check if both pass
+            if default_success and v2_success:
+                print(f"\n✅ All tests pass in both modes!")
+                break
+            
+            # If we have more iterations, try to fix
+            if iteration < max_fix_iterations:
+                print(f"\n⚠️  Tests failed, attempting fix (iteration {iteration + 1})...")
+                
+                # Get the current code
+                current_code = read_file_content(target_file)
+                
+                # Get failure details
+                test_output = default_log if not default_success else v2_log
+                
+                # Generate fix
+                fixer_prompt = get_fixer_prompt(current_code, symbol, test_output, iteration)
+                
+                try:
+                    fixed_code = generate_code(
+                        prompt=fixer_prompt,
+                        system_instruction=FIXER_SYSTEM_PROMPT,
+                        temperature=0.2
+                    )
+                    
+                    # Validate and apply fix
+                    is_valid, error = validate_python_syntax(fixed_code)
+                    if is_valid:
+                        apply_refactored_code(target_file, fixed_code, create_backup=False)
+                        save_diff_artifact(original_code, fixed_code, target_file)
+                        refactored_code = fixed_code
+                        print("   Fix applied, re-running tests...")
+                    else:
+                        print(f"   Fix has syntax error: {error}")
+                except Exception as e:
+                    print(f"   Fix generation failed: {e}")
+            else:
+                print(f"\n❌ Tests still failing after {max_fix_iterations} iterations")
+                # Don't return False - still generate evidence
         
         # ============================================================
         # STEP 9: Generate evidence pack
         # ============================================================
         print_step(9, total_steps, "Generating evidence pack...")
         
-        # Placeholder - will be implemented in Phase 4
-        print("📝 TODO: Implement evidence generation")
-        print("   (Will be added in Phase 4)")
+        # Prepare test results
+        test_results = {
+            "default_passed": default_success,
+            "v2_passed": v2_success,
+            "total_tests": default_counts.get("passed", 0) + default_counts.get("failed", 0),
+            "default_count": default_counts,
+            "v2_count": v2_counts,
+        }
+        
+        # Generate the evidence report
+        evidence_path = generate_evidence_report(
+            target_file=target_file,
+            symbol=symbol,
+            original_code=original_code,
+            refactored_code=refactored_code,
+            plan=plan,
+            test_results=test_results,
+            iterations=iteration
+        )
+        
+        print(f"✅ Evidence report generated: {evidence_path}")
+        
+        # List all artifacts
+        from legacy_architect.artifacts import list_artifacts
+        artifacts = list_artifacts()
+        print(f"\n📁 Artifacts generated ({len(artifacts)} files):")
+        for artifact in sorted(artifacts):
+            print(f"   - {artifact}")
         
         # ============================================================
         # DONE
         # ============================================================
         print("\n" + "=" * 60)
-        print("🎉 Agent run complete!")
-        print("=" * 60)
-        print("\nNote: Steps 4-9 are placeholders.")
-        print("They will be implemented in Phase 3 and Phase 4.")
+        if default_success and v2_success:
+            print("🎉 REFACTORING SUCCESSFUL!")
+            print("=" * 60)
+            print(f"\n✅ All {test_results['total_tests']} tests pass in both modes")
+            print(f"✅ Evidence report: artifacts/EVIDENCE.md")
+            print(f"✅ Code diff: artifacts/diff.patch")
+        else:
+            print("⚠️  REFACTORING COMPLETED WITH ISSUES")
+            print("=" * 60)
+            print(f"\nSome tests failed. Review artifacts/EVIDENCE.md for details.")
         
-        return True
+        return default_success and v2_success
         
     except Exception as e:
         print(f"\n❌ Agent failed with error: {e}")
