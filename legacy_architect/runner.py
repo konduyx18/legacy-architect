@@ -6,6 +6,8 @@ from typing import Optional
 from legacy_architect.impact import scan_for_symbol, build_impact_map
 from legacy_architect.artifacts import write_json, write_text, ensure_artifacts_dir
 from legacy_architect.git_tools import ensure_clean_working_tree, create_branch, get_current_branch
+from legacy_architect.char_tests import generate_characterization_tests, get_test_case_count
+from legacy_architect.test_runner import run_tests_default_mode, run_tests_v2_mode, run_dual_mode_tests, count_test_results
 
 
 # Agent workflow steps
@@ -123,18 +125,29 @@ def run_agent(
         # ============================================================
         print_step(4, total_steps, "Generating characterization tests...")
         
-        # Placeholder - will be implemented in Phase 3
-        print("📝 TODO: Implement characterization test generation")
-        print("   (Will be added in Phase 3)")
+        test_file = generate_characterization_tests(
+            target_module="app.legacy.billing",
+            target_function=symbol,
+            output_file="tests/test_characterization_billing.py"
+        )
+        test_count = get_test_case_count()
+        print(f"✅ Generated {test_count} characterization tests")
+        print(f"   Output: {test_file}")
         
         # ============================================================
         # STEP 5: Run tests (default mode)
         # ============================================================
         print_step(5, total_steps, "Running tests (default mode)...")
         
-        # Placeholder - will be implemented in Phase 3
-        print("📝 TODO: Implement test runner")
-        print("   (Will be added in Phase 3)")
+        default_success, default_log = run_tests_default_mode()
+        counts = count_test_results(default_log)
+        
+        if default_success:
+            print(f"✅ All tests passed: {counts['passed']} passed, {counts['failed']} failed")
+        else:
+            print(f"❌ Tests failed: {counts['passed']} passed, {counts['failed']} failed")
+            print("   Check artifacts/test_default.log for details")
+            return False
         
         # ============================================================
         # STEP 6: Generate refactoring plan
