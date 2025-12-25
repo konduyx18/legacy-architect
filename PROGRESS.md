@@ -95,7 +95,7 @@ git commit -m "Phase 0: Project scaffolding and Gemini API setup complete"
 | 1.3 | Created call site #2 (app/api.py) | ✅ Done |
 | 1.4 | Created smoke tests (tests/test_smoke.py) | ✅ Done |
 | 1.5 | Ran all tests (14 passed) | ✅ Done |
-| 1.6 | Committed Phase 1 changes | ⬜ Pending |
+| 1.6 | Committed Phase 1 changes | ✅ Done |
 | 1.7 | Push to GitHub | ⬜ Pending |
 
 ### Files Created in Phase 1:
@@ -149,23 +149,78 @@ tests/test_smoke.py::TestAPI::test_get_price_preview PASSED
 
 ---
 
-## 🔜 What's Next: Phase 2 - Agent Chassis
+## ✅ Phase 2: Agent Chassis (COMPLETED)
 
-Phase 2 will create:
+**Date Completed:** December 25, 2025
 
-| File | Purpose |
-|------|---------|
-| legacy_architect/__main__.py | CLI entry point |
-| legacy_architect/runner.py | Main orchestration loop |
-| legacy_architect/impact.py | Find symbol usage across codebase |
-| legacy_architect/artifacts.py | Write JSON/text to artifacts/ |
-| legacy_architect/git_tools.py | Branch creation, clean check |
+### What We Did:
+
+| Step | Description | Status |
+|------|-------------|--------|
+| 2.1 | Created CLI entry point (`__main__.py`) | ✅ Done |
+| 2.2 | Created main orchestration loop (`runner.py`) | ✅ Done |
+| 2.3 | Created impact scanner (`impact.py`) | ✅ Done |
+| 2.4 | Created artifacts writer (`artifacts.py`) | ✅ Done |
+| 2.5 | Created git tools (`git_tools.py`) | ✅ Done |
+| 2.6 | Tested all components | ✅ Done |
+| 2.7 | Committed and pushed to GitHub | ⬜ Pending |
+
+### Files Created in Phase 2:
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `legacy_architect/__main__.py` | ~86 | CLI with `run` and `scan` commands |
+| `legacy_architect/runner.py` | ~207 | 9-step orchestration workflow |
+| `legacy_architect/impact.py` | ~198 | Symbol scanning & impact analysis |
+| `legacy_architect/artifacts.py` | ~246 | JSON/text file management |
+| `legacy_architect/git_tools.py` | ~232 | Git operations & branch management |
+
+### Test Results:
+
+**CLI Help:**
+```
+python -m legacy_architect → Shows run and scan commands ✅
+```
+
+**Impact Scanner:**
+```
+python -m legacy_architect scan --symbol compute_invoice_total
+→ Found 6 files, 24 usages ✅
+```
+
+**Dry Run:**
+```
+python -m legacy_architect run --dry-run
+→ Steps 1-3 completed, impact.json created ✅
+```
+
+### Agent Capabilities After Phase 2:
+
+- ✅ CLI interface with `run` and `scan` commands
+- ✅ Prerequisite checking (API key, target file, git status)
+- ✅ Symbol usage scanning across entire codebase
+- ✅ Impact map generation (JSON format)
+- ✅ Artifacts directory management
+- ✅ Git operations (branch, commit, diff, stash)
+- 📝 Steps 4-9 are placeholders for Phase 3 and 4
+
+---
+
+## 🔜 What's Next: Phase 3 - Characterization Tests + Test Runner
+
+Phase 3 will implement:
+
+| Component | Purpose |
+|-----------|---------|
+| Test generator | Generate characterization tests from existing tests |
+| Test runner | Execute tests and capture results |
+| Test validator | Compare test results between modes |
 
 ### Remaining Phases:
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| Phase 2 | Agent Chassis | ⬜ Not started |
+| Phase 2 | Agent Chassis | ✅ Completed |
 | Phase 3 | Characterization Tests + Test Runner | ⬜ Not started |
 | Phase 4 | Gemini Integration (THE CORE) | ⬜ Not started |
 | Phase 5 | Polish | ⬜ Not started |
