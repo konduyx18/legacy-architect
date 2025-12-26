@@ -1,15 +1,14 @@
-"""Legacy billing module - DO NOT MODIFY without extensive testing"""
+"""Legacy billing module - DO NOT MODIFY without extensive testing."""
 
 import os
+from typing import Dict, List, Any
 
-def compute_invoice_total(order: dict) -> dict:
-    """Calculate invoice total with discounts, tax, and shipping."""
-    
-    # Check for new version
-    if os.environ.get("BILLING_V2"):
-        # TODO: implement refactored version
-        pass
-    
+
+def _compute_invoice_total_legacy(order: dict) -> dict:
+    """
+    Original legacy implementation.
+    This is the 'messy' code that Gemini will refactor.
+    """
     # Calculate subtotal
     s = 0
     has_physical = False
@@ -27,8 +26,6 @@ def compute_invoice_total(order: dict) -> dict:
         elif c == "WELCOME5":
             if s > 20:
                 d = 5.0
-            # else:
-            #     d = 0  # old logic
         elif c == "HALF":
             d = s * 0.5
             if d > 50:
@@ -41,8 +38,6 @@ def compute_invoice_total(order: dict) -> dict:
             d = d + (s * 0.02)
         elif m == "platinum":
             d = d + (s * 0.05)
-        # elif m == "silver":  # deprecated
-        #     d = d + (s * 0.01)
     
     # Shipping calculation
     sh = 0
@@ -78,11 +73,35 @@ def compute_invoice_total(order: dict) -> dict:
     }
 
 
-# Legacy helper functions (unused)
-# def apply_discount(amount, percent):
-#     return amount * (1 - percent)
-# 
-# def calculate_tax_old(amount, state):
-#     # Old tax calculation - replaced by inline logic
-#     rates = {"CA": 0.0825, "NY": 0.07, "TX": 0}
-#     return amount * rates.get(state, 0.05)
+def _compute_invoice_total_v2(order: dict) -> dict:
+    """
+    Refactored implementation (V2).
+    This will be replaced by Gemini's refactored code.
+    For now, it calls the legacy implementation to ensure tests pass.
+    """
+    # TODO: This will be replaced by Gemini's refactored code
+    # For now, delegate to legacy to ensure identical behavior
+    return _compute_invoice_total_legacy(order)
+
+
+def compute_invoice_total(order: dict) -> dict:
+    """
+    Calculate invoice total with discounts, tax, and shipping.
+    
+    This is the PUBLIC API. It routes to either legacy or v2 
+    implementation based on the BILLING_V2 environment variable.
+    
+    Args:
+        order: Dictionary containing items, coupon, member, and state
+        
+    Returns:
+        Dictionary with currency, subtotal, discount, shipping, tax, total
+    """
+    if os.environ.get("BILLING_V2"):
+        return _compute_invoice_total_v2(order)
+    else:
+        return _compute_invoice_total_legacy(order)
+
+
+# For backwards compatibility and direct imports
+__all__ = ["compute_invoice_total"]

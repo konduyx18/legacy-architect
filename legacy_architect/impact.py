@@ -13,6 +13,11 @@ SKIP_DIRS = {".venv", ".git", "__pycache__", "node_modules", ".pytest_cache", "a
 SCAN_EXTENSIONS = {".py"}
 
 
+def _normalize_path(path: str) -> str:
+    """Normalize path to use forward slashes for consistency."""
+    return path.replace("\\", "/")
+
+
 def scan_for_symbol(symbol: str, root_dir: str = ".") -> Dict[str, List[int]]:
     """
     Scan codebase for usage of a symbol.
@@ -88,41 +93,43 @@ def build_impact_map(
     except Exception as e:
         print(f"Warning: Could not read target file: {e}")
     
-    # Count total usages
-    total_usages = sum(len(lines) for lines in usage_map.values())
-    
     # Categorize files by type
     call_sites = []
     test_files = []
     other_files = []
+    definition_file = None
+    
+    # Normalize target file path for comparison
+    normalized_target = _normalize_path(target_file)
     
     for file_path, lines in usage_map.items():
-        # Skip the target file itself
-        if os.path.normpath(file_path) == os.path.normpath(target_file):
-            continue
+        normalized_path = _normalize_path(file_path)
         
-        file_info = {
-            "file": file_path,
+        entry = {
+            "file": normalized_path,
             "lines": lines,
             "usage_count": len(lines)
         }
         
-        if "test" in file_path.lower():
-            test_files.append(file_info)
-        elif file_path.startswith("app/"):
-            call_sites.append(file_info)
+        # Categorize based on normalized path
+        if "/test" in normalized_path or "test_" in normalized_path:
+            test_files.append(entry)
+        elif normalized_path == normalized_target:
+            definition_file = entry
+        elif "/app/" in normalized_path or normalized_path.startswith("app/"):
+            call_sites.append(entry)
         else:
-            other_files.append(file_info)
+            other_files.append(entry)
     
     # Build the impact map
     impact_map = {
         "target": {
-            "file": target_file,
+            "file": _normalize_path(target_file),
             "symbol": symbol,
         },
         "summary": {
             "total_files": len(usage_map),
-            "total_usages": total_usages,
+            "total_usages": sum(len(lines) for lines in usage_map.values()),
             "call_sites": len(call_sites),
             "test_files": len(test_files),
             "other_files": len(other_files),
@@ -130,7 +137,8 @@ def build_impact_map(
         "call_sites": sorted(call_sites, key=lambda x: x["file"]),
         "test_files": sorted(test_files, key=lambda x: x["file"]),
         "other_files": sorted(other_files, key=lambda x: x["file"]),
-        "all_usages": {k: v for k, v in sorted(usage_map.items())},
+        "definition_file": definition_file,
+        "all_usages": {_normalize_path(k): v for k, v in sorted(usage_map.items())},
     }
     
     return impact_map

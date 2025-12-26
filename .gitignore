@@ -10,3 +10,6 @@ dist/
 build/
 .idea/
 .vscode/
+
+# Backup files created during refactoring
+*.backup_*
