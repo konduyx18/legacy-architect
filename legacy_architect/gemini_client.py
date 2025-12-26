@@ -72,7 +72,7 @@ def generate_text(
     prompt: str,
     system_instruction: Optional[str] = None,
     temperature: float = 0.7,
-    max_tokens: int = 8192
+    max_tokens: int = 16384
 ) -> str:
     """
     Generate text using Gemini.
