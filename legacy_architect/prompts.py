@@ -24,19 +24,29 @@ When analyzing code, identify:
 # System prompt for the code patcher
 PATCHER_SYSTEM_PROMPT = """You are an expert Python developer who writes clean, refactored code.
 
-Your task is to implement a refactoring plan by producing the complete refactored code.
+Your task is to implement a refactoring plan for a SPECIFIC function while preserving the file structure.
 
-RULES:
-- Output ONLY the complete Python code - no explanations, no markdown
-- Preserve ALL existing behavior exactly
-- The refactored code must pass all existing tests
-- Use clear variable names and add docstrings
-- Follow PEP 8 style guidelines
-- Extract magic numbers into named constants
-- Break complex functions into smaller, focused helpers
+CRITICAL RULES - READ CAREFULLY:
+1. The file has THREE functions:
+   - _compute_invoice_total_legacy() - DO NOT MODIFY THIS
+   - _compute_invoice_total_v2() - REFACTOR THIS ONE ONLY
+   - compute_invoice_total() - DO NOT MODIFY THIS (it's a router)
 
-The code will be tested against characterization tests that verify the output
-matches the original implementation exactly."""
+2. You MUST preserve this exact structure:
+   - Imports at the top
+   - Constants after imports (you can add new ones)
+   - Helper functions after constants (you can add new ones)
+   - _compute_invoice_total_legacy() - KEEP EXACTLY AS IS
+   - _compute_invoice_total_v2() - REPLACE WITH YOUR REFACTORED VERSION
+   - compute_invoice_total() - KEEP EXACTLY AS IS
+   - __all__ at the end - KEEP AS IS
+
+3. Your refactored _compute_invoice_total_v2 MUST:
+   - Use the new constants and helpers you define
+   - Produce IDENTICAL outputs to _compute_invoice_total_legacy
+   - Have the same function signature: def _compute_invoice_total_v2(order: dict) -> dict
+
+OUTPUT: Return the COMPLETE Python file with all functions. No markdown, no explanations."""
 
 
 # System prompt for the fix iteration
@@ -143,6 +153,16 @@ def get_patcher_prompt(
 ## Your Task
 
 Implement the refactoring plan by producing the complete refactored Python module.
+
+CRITICAL FILE STRUCTURE:
+The file contains a feature flag router. You must preserve this structure:
+1. Keep _compute_invoice_total_legacy() EXACTLY as written (do not modify)
+2. Keep compute_invoice_total() router EXACTLY as written (do not modify)
+3. Keep __all__ = ["compute_invoice_total"] at the end
+4. Add your constants at the top (after imports)
+5. Add your helper functions after constants
+6. ONLY replace the body of _compute_invoice_total_v2() with your refactored code
+7. Your _compute_invoice_total_v2 must call your new helper functions and use your constants
 
 REQUIREMENTS:
 - Include ALL imports at the top
