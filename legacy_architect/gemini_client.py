@@ -2,12 +2,48 @@
 
 import os
 import json
+import re
 from typing import Optional, Dict, Any
 from google import genai
 
 
 # Default model
 DEFAULT_MODEL = "gemini-3-flash-preview"
+
+
+def _strip_markdown_code_blocks(text: str) -> str:
+    """
+    Remove markdown code block markers from text.
+    
+    Handles formats like:
+    ```python
+    code
+    ```
+    
+    or just:
+    ```
+    code
+    ```
+    """
+    # Remove opening code block markers (```python, ```py, ```)
+    text = re.sub(r'^```(?:python|py)?\s*\n', '', text, flags=re.MULTILINE)
+    
+    # Remove closing code block markers
+    text = re.sub(r'\n```\s*$', '', text, flags=re.MULTILINE)
+    
+    # Also handle case where ``` is at the very start or end
+    text = text.strip()
+    if text.startswith('```python'):
+        text = text[9:].lstrip('\n')
+    elif text.startswith('```py'):
+        text = text[5:].lstrip('\n')
+    elif text.startswith('```'):
+        text = text[3:].lstrip('\n')
+    
+    if text.endswith('```'):
+        text = text[:-3].rstrip('\n')
+    
+    return text.strip()
 
 
 def get_client() -> genai.Client:
@@ -150,16 +186,10 @@ def generate_code(
         temperature=temperature
     )
     
-    # Clean up response - remove markdown code blocks if present
-    cleaned = response.strip()
-    if cleaned.startswith("```python"):
-        cleaned = cleaned[9:]
-    elif cleaned.startswith("```"):
-        cleaned = cleaned[3:]
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
+    # Strip any markdown code blocks
+    code = _strip_markdown_code_blocks(response)
     
-    return cleaned.strip()
+    return code
 
 
 def generate_diff(
