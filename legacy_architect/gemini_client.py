@@ -11,6 +11,117 @@ from google import genai
 DEFAULT_MODEL = "gemini-3-flash-preview"
 
 
+def _extract_text(response: Any) -> str:
+    """
+    Extract text from Gemini API response, handling multiple response formats.
+    
+    Supports:
+    - Standard Gemini response (response.text)
+    - Candidates-based response (response.candidates[0].content.parts[0].text)
+    - Gemini 3 thinking models (different structure with thoughts)
+    - Fallback regex extraction from string representation
+    
+    Args:
+        response: The Gemini API response object
+    
+    Returns:
+        Extracted text from the response
+    
+    Raises:
+        ValueError: If text cannot be extracted from response
+    """
+    if response is None:
+        raise ValueError("API returned None response")
+    
+    # Method 1: Try standard response.text attribute
+    if hasattr(response, 'text') and response.text:
+        return response.text
+    
+    # Method 2: Try candidates structure (standard format)
+    if hasattr(response, 'candidates') and response.candidates:
+        try:
+            candidate = response.candidates[0]
+            if hasattr(candidate, 'content') and candidate.content:
+                if hasattr(candidate.content, 'parts') and candidate.content.parts:
+                    part = candidate.content.parts[0]
+                    if hasattr(part, 'text') and part.text:
+                        return part.text
+        except (IndexError, AttributeError) as e:
+            # Continue to next method if this fails
+            pass
+    
+    # Method 3: Try Gemini 3 thinking model format
+    # Gemini 3 models may have thoughts_token_count but empty content
+    # Check if there's a thought or alternative text field
+    if hasattr(response, 'candidates') and response.candidates:
+        try:
+            candidate = response.candidates[0]
+            
+            # Check for thought field
+            if hasattr(candidate, 'thought') and candidate.thought:
+                return candidate.thought
+            
+            # Check for alternative content structures
+            if hasattr(candidate, 'content'):
+                content = candidate.content
+                
+                # Try to get any text from parts even if it looks empty
+                if hasattr(content, 'parts') and content.parts:
+                    for part in content.parts:
+                        # Check for text attribute
+                        if hasattr(part, 'text'):
+                            text = part.text
+                            if text:  # Only return if not empty
+                                return text
+                        
+                        # Check for thought attribute in part
+                        if hasattr(part, 'thought') and part.thought:
+                            return part.thought
+                
+                # Try to get text directly from content
+                if hasattr(content, 'text') and content.text:
+                    return content.text
+        except (IndexError, AttributeError) as e:
+            # Continue to fallback method
+            pass
+    
+    # Method 4: Fallback - try to extract text from string representation
+    # This handles cases where the response structure is non-standard
+    response_str = str(response)
+    
+    # Try to find text in common patterns
+    text_patterns = [
+        r"text:\s*['\"](.+?)['\"]",
+        r"text=(['\"])(.+?)\1",
+        r"'text':\s*['\"](.+?)['\"]",
+        r'"text":\s*"(.+?)"',
+    ]
+    
+    for pattern in text_patterns:
+        match = re.search(pattern, response_str, re.DOTALL)
+        if match:
+            # Get the last group (the actual text content)
+            text = match.group(match.lastindex)
+            if text and text.strip():
+                return text.strip()
+    
+    # If all methods fail, provide detailed error message
+    error_details = []
+    error_details.append(f"Response type: {type(response)}")
+    
+    if hasattr(response, 'candidates'):
+        error_details.append(f"Has candidates: {len(response.candidates) if response.candidates else 0}")
+    
+    if hasattr(response, 'thoughts_token_count'):
+        error_details.append(f"Thoughts token count: {response.thoughts_token_count}")
+    
+    if hasattr(response, '__dict__'):
+        error_details.append(f"Response attributes: {list(response.__dict__.keys())}")
+    
+    error_msg = "Could not extract text from response. " + " | ".join(error_details)
+    raise ValueError(error_msg)
+
+
 def _strip_markdown_code_blocks(text: str) -> str:
     """
     Remove markdown code block markers from text.
@@ -105,22 +216,8 @@ def generate_text(
         config=config
     )
     
-    # Handle response - check for text attribute
-    if response is None:
-        raise ValueError("API returned None response")
-    
-    # Try to get text from response
-    if hasattr(response, 'text') and response.text:
-        return response.text
-    
-    # Try candidates structure
-    if hasattr(response, 'candidates') and response.candidates:
-        candidate = response.candidates[0]
-        if hasattr(candidate, 'content') and candidate.content:
-            if hasattr(candidate.content, 'parts') and candidate.content.parts:
-                return candidate.content.parts[0].text
-    
-    raise ValueError(f"Could not extract text from response: {response}")
+    # Use the enhanced _extract_text() helper to handle all response formats
+    return _extract_text(response)
 
 
 def generate_json(
