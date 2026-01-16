@@ -14,18 +14,59 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS with eye-catching gradient effects
 st.markdown("""
 <style>
-.main-header {
-    font-size: 2.5rem;
+@keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes glow {
+    0%, 100% { text-shadow: 0 0 10px rgba(255, 217, 61, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(255, 217, 61, 0.8), 0 0 30px rgba(255, 217, 61, 0.6); }
+}
+
+.main-title {
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #667eea 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    padding: 20px 0 10px 0;
+    animation: shimmer 4s ease-in-out infinite;
+    letter-spacing: 1px;
+}
+
+.subtitle {
+    font-size: 1.3rem;
+    color: #e2e8f0;
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.gemini-badge {
+    background: linear-gradient(135deg, #ffd93d 0%, #f5576c 100%);
+    padding: 6px 18px;
+    border-radius: 25px;
+    color: #1a202c;
+    font-weight: 800;
+    display: inline-block;
+    animation: glow 2s ease-in-out infinite;
+    box-shadow: 0 4px 15px rgba(255, 217, 61, 0.4);
+}
+
+.workflow-arrow {
+    color: #f093fb;
     font-weight: bold;
-    color: #1E88E5;
+    margin: 0 8px;
 }
-.sub-header {
-    font-size: 1.2rem;
-    color: #666;
-}
+
 .success-box {
     background-color: #d4edda;
     border: 1px solid #c3e6cb;
@@ -62,7 +103,7 @@ def main():
     # Sidebar
     with st.sidebar:
         st.markdown("## 🏗️ Legacy Architect")
-        st.markdown("AI-Powered Code Refactoring")
+        st.markdown("⚡ AI-Powered Code Refactoring")
         st.markdown("---")
         
         st.markdown("### 🎯 Project Info")
@@ -77,9 +118,15 @@ def main():
         st.markdown("[GitHub Repo](https://github.com/konduyx18/legacy-architect)")
         st.markdown("[Gemini 3 Hackathon](https://gemini3.devpost.com/)")
     
-    # Main content
-    st.markdown('<p class="main-header">🏗️ Legacy Architect</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Autonomous Code Refactoring Agent powered by Gemini 3</p>', unsafe_allow_html=True)
+    # Main content - Eye-catching title with gradient effects
+    st.markdown("""
+    <div class="main-title">
+        🤖 Analyze <span class="workflow-arrow">→</span> Refactor <span class="workflow-arrow">→</span> Verify
+    </div>
+    <div class="subtitle">
+        ✨ Transform Legacy Code Safely with <span class="gemini-badge">Gemini 3 AI</span> ✨
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("---")
     
     # Check if artifacts exist
