@@ -1,0 +1,53 @@
+# Test Run: BILLING_V2 MODE
+
+Timestamp: 2026-01-16 22:15:56
+Test Path: tests/test_characterization_billing.py
+BILLING_V2: SET TO "1" (refactored behavior)
+Exit Code: 0
+Success: True
+
+============================================================
+STDOUT:
+============================================================
+
+============================= test session starts =============================
+platform win32 -- Python 3.13.1, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\yeliz\Desktop\legacy-architect\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\yeliz\Desktop\legacy-architect
+configfile: pyproject.toml
+plugins: anyio-4.12.0
+collecting ... collected 24 items
+
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_empty_order PASSED [  4%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_single_physical_item_under_50 PASSED [  8%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_single_physical_item_over_50 PASSED [ 12%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_digital_only_order PASSED [ 16%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_mixed_physical_digital PASSED [ 20%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_save10_coupon PASSED [ 25%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_welcome5_coupon_eligible PASSED [ 29%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_welcome5_coupon_not_eligible PASSED [ 33%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_half_coupon_under_cap PASSED [ 37%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_half_coupon_over_cap PASSED [ 41%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_gold_member PASSED [ 45%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_platinum_member PASSED [ 50%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_coupon_plus_member PASSED [ 54%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_california_tax PASSED [ 58%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_new_york_tax PASSED [ 62%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_texas_no_tax PASSED [ 66%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_default_state_tax PASSED [ 70%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_complex_order PASSED [ 75%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_multiple_quantities PASSED [ 79%]
+tests/test_characterization_billing.py::TestCharacterizationComputeInvoiceTotal::test_zero_price_item PASSED [ 83%]
+tests/test_characterization_billing.py::TestDualModeEquivalence::test_dual_mode_single_physical_item_under_50 PASSED [ 87%]
+tests/test_characterization_billing.py::TestDualModeEquivalence::test_dual_mode_save10_coupon PASSED [ 91%]
+tests/test_characterization_billing.py::TestDualModeEquivalence::test_dual_mode_coupon_plus_member PASSED [ 95%]
+tests/test_characterization_billing.py::TestDualModeEquivalence::test_dual_mode_complex_order PASSED [100%]
+
+============================= 24 passed in 0.09s ==============================
+
+
+============================================================
+STDERR:
+============================================================
+
+

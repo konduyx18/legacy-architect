@@ -1,0 +1,63 @@
+{
+  "summary": "Consolidate the legacy and V2 logic into a single, highly readable implementation that eliminates the environment variable branch. The refactor will focus on extracting business rules into a centralized constants module, replacing cryptic variable names with descriptive ones, and ensuring the exact calculation sequence and rounding logic of the legacy code is preserved.",
+  "issues": [
+    "Cryptic variable names in legacy code (s, d, c, m, sh, st, t) hinder maintainability.",
+    "Magic numbers for tax rates, discount thresholds, and shipping costs are hardcoded in the legacy path.",
+    "Redundant logic exists between the legacy and V2 implementations, increasing the risk of divergence.",
+    "The environment variable 'BILLING_V2' creates a split execution path that complicates testing and debugging.",
+    "Lack of type hints and comprehensive docstrings in the legacy implementation.",
+    "Implicit handling of the 'TX' tax rate (hardcoded 0) is inconsistent with other state logic."
+  ],
+  "improvements": [
+    "Unify the logic into a single implementation, removing the need for the 'BILLING_V2' flag.",
+    "Apply PEP 8 naming conventions (e.g., subtotal instead of s, discount_amount instead of d).",
+    "Add explicit type hints (Dict[str, Any], float, etc.) to all functions.",
+    "Standardize the tax calculation using a lookup table or a cleaner conditional structure.",
+    "Ensure the rounding logic precisely matches the legacy output for subtotal, discount, shipping, tax, and total.",
+    "Improve error resilience by using .get() with appropriate defaults for all dictionary lookups."
+  ],
+  "constants": {
+    "DISCOUNT_SAVE10_RATE": 0.1,
+    "DISCOUNT_WELCOME5_THRESHOLD": 20.0,
+    "DISCOUNT_WELCOME5_VALUE": 5.0,
+    "DISCOUNT_HALF_RATE": 0.5,
+    "DISCOUNT_HALF_LIMIT": 50.0,
+    "MEMBER_GOLD_RATE": 0.02,
+    "MEMBER_PLATINUM_RATE": 0.05,
+    "SHIPPING_FREE_THRESHOLD": 50.0,
+    "SHIPPING_STANDARD_FEE": 5.99,
+    "TAX_RATE_CA": 0.0825,
+    "TAX_RATE_NY": 0.07,
+    "TAX_RATE_TX": 0.0,
+    "TAX_RATE_DEFAULT": 0.05,
+    "PRECISION_DECIMALS": 2
+  },
+  "helper_functions": [
+    {
+      "name": "_calculate_base_subtotal",
+      "description": "Calculates the sum of (qty * price) and identifies if any item is 'physical'."
+    },
+    {
+      "name": "_get_coupon_discount",
+      "description": "Calculates the discount amount based on the coupon code and subtotal."
+    },
+    {
+      "name": "_get_member_discount",
+      "description": "Calculates the additional discount based on membership tier (Gold/Platinum)."
+    },
+    {
+      "name": "_get_shipping_fee",
+      "description": "Determines shipping cost based on subtotal and physical item presence."
+    },
+    {
+      "name": "_get_tax_total",
+      "description": "Calculates tax based on the state code and the subtotal after discounts."
+    }
+  ],
+  "risks": [
+    "Rounding errors: The legacy code rounds individual components (subtotal, discount, etc.) before the final total. The refactor must mirror this exact sequence to avoid 1-cent discrepancies.",
+    "Floating point precision: Python's float handling can vary if the order of operations changes; the refactor must maintain the (s - d + sh + t) calculation order.",
+    "Input validation: The legacy code handles missing 'items' or 'state' gracefully; the refactor must ensure it doesn't raise KeyErrors.",
+    "Behavioral parity: The 'HALF' coupon has a hard cap of 50 in legacy; the refactor must ensure this logic is not 'optimized' away or changed."
+  ]
+}

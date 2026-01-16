@@ -1,0 +1,225 @@
+{
+  "target": {
+    "file": "app/legacy/billing.py",
+    "symbol": "compute_invoice_total"
+  },
+  "summary": {
+    "total_files": 10,
+    "total_usages": 62,
+    "call_sites": 2,
+    "test_files": 2,
+    "other_files": 5
+  },
+  "call_sites": [
+    {
+      "file": "app/api.py",
+      "lines": [
+        3,
+        17,
+        41,
+        64,
+        65
+      ],
+      "usage_count": 5
+    },
+    {
+      "file": "app/services/billing_service.py",
+      "lines": [
+        3,
+        36
+      ],
+      "usage_count": 2
+    }
+  ],
+  "test_files": [
+    {
+      "file": "tests/test_characterization_billing.py",
+      "lines": [
+        2,
+        14,
+        18,
+        33,
+        75,
+        117,
+        159,
+        207,
+        250,
+        293,
+        336,
+        379,
+        422,
+        465,
+        508,
+        552,
+        594,
+        636,
+        678,
+        720,
+        776,
+        818,
+        866,
+        929,
+        933,
+        961,
+        965,
+        994,
+        998,
+        1039,
+        1043
+      ],
+      "usage_count": 31
+    },
+    {
+      "file": "tests/test_smoke.py",
+      "lines": [
+        4,
+        10,
+        18,
+        36,
+        48,
+        59,
+        70,
+        81,
+        92,
+        103,
+        113,
+        123
+      ],
+      "usage_count": 12
+    }
+  ],
+  "other_files": [
+    {
+      "file": "legacy_architect/__main__.py",
+      "lines": [
+        28,
+        29
+      ],
+      "usage_count": 2
+    },
+    {
+      "file": "legacy_architect/char_tests.py",
+      "lines": [
+        216
+      ],
+      "usage_count": 1
+    },
+    {
+      "file": "legacy_architect/impact.py",
+      "lines": [
+        193,
+        194
+      ],
+      "usage_count": 2
+    },
+    {
+      "file": "legacy_architect/prompts.py",
+      "lines": [
+        33,
+        41,
+        160,
+        161
+      ],
+      "usage_count": 4
+    },
+    {
+      "file": "streamlit_app.py",
+      "lines": [
+        71
+      ],
+      "usage_count": 1
+    }
+  ],
+  "definition_file": {
+    "file": "app/legacy/billing.py",
+    "lines": [
+      276,
+      296
+    ],
+    "usage_count": 2
+  },
+  "all_usages": {
+    "app/api.py": [
+      3,
+      17,
+      41,
+      64,
+      65
+    ],
+    "app/legacy/billing.py": [
+      276,
+      296
+    ],
+    "app/services/billing_service.py": [
+      3,
+      36
+    ],
+    "legacy_architect/__main__.py": [
+      28,
+      29
+    ],
+    "legacy_architect/char_tests.py": [
+      216
+    ],
+    "legacy_architect/impact.py": [
+      193,
+      194
+    ],
+    "legacy_architect/prompts.py": [
+      33,
+      41,
+      160,
+      161
+    ],
+    "streamlit_app.py": [
+      71
+    ],
+    "tests/test_characterization_billing.py": [
+      2,
+      14,
+      18,
+      33,
+      75,
+      117,
+      159,
+      207,
+      250,
+      293,
+      336,
+      379,
+      422,
+      465,
+      508,
+      552,
+      594,
+      636,
+      678,
+      720,
+      776,
+      818,
+      866,
+      929,
+      933,
+      961,
+      965,
+      994,
+      998,
+      1039,
+      1043
+    ],
+    "tests/test_smoke.py": [
+      4,
+      10,
+      18,
+      36,
+      48,
+      59,
+      70,
+      81,
+      92,
+      103,
+      113,
+      123
+    ]
+  }
+}
