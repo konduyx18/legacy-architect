@@ -125,7 +125,7 @@
     {
       "file": "streamlit_app.py",
       "lines": [
-        71
+        112
       ],
       "usage_count": 1
     }
@@ -133,8 +133,8 @@
   "definition_file": {
     "file": "app/legacy/billing.py",
     "lines": [
-      276,
-      296
+      187,
+      207
     ],
     "usage_count": 2
   },
@@ -147,8 +147,8 @@
       65
     ],
     "app/legacy/billing.py": [
-      276,
-      296
+      187,
+      207
     ],
     "app/services/billing_service.py": [
       3,
@@ -172,7 +172,7 @@
       161
     ],
     "streamlit_app.py": [
-      71
+      112
     ],
     "tests/test_characterization_billing.py": [
       2,

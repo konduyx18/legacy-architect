@@ -1,6 +1,6 @@
 # Test Run: BILLING_V2 MODE
 
-Timestamp: 2026-01-16 22:15:56
+Timestamp: 2026-01-17 03:01:30
 Test Path: tests/test_characterization_billing.py
 BILLING_V2: SET TO "1" (refactored behavior)
 Exit Code: 0
@@ -43,7 +43,7 @@ tests/test_characterization_billing.py::TestDualModeEquivalence::test_dual_mode_
 tests/test_characterization_billing.py::TestDualModeEquivalence::test_dual_mode_coupon_plus_member PASSED [ 95%]
 tests/test_characterization_billing.py::TestDualModeEquivalence::test_dual_mode_complex_order PASSED [100%]
 
-============================= 24 passed in 0.09s ==============================
+============================= 24 passed in 0.06s ==============================
 
 
 ============================================================

@@ -13,60 +13,94 @@ MEMBER_GOLD_RATE = 0.02
 MEMBER_PLATINUM_RATE = 0.05
 SHIPPING_FREE_THRESHOLD = 50.0
 SHIPPING_STANDARD_FEE = 5.99
-TAX_RATE_CA = 0.0825
-TAX_RATE_NY = 0.07
-TAX_RATE_TX = 0.0
+TAX_RATES = {
+    "CA": 0.0825,
+    "NY": 0.07,
+    "TX": 0.0
+}
 TAX_RATE_DEFAULT = 0.05
 PRECISION_DECIMALS = 2
 CURRENCY_USD = "USD"
 
 # Helper functions
-def _calculate_base_subtotal(items: List[Dict[str, Any]]) -> Tuple[float, bool]:
-    """Calculates the sum of (qty * price) and identifies if any item is 'physical'."""
+def _calculate_items_subtotal(items: List[Dict[str, Any]]) -> Tuple[float, bool]:
+    """
+    Calculates the raw subtotal and checks for the presence of physical items.
+    
+    Args:
+        items: List of item dictionaries containing qty and price.
+        
+    Returns:
+        A tuple containing the float subtotal and a boolean indicating if physical items exist.
+    """
     subtotal = 0.0
     has_physical = False
     for item in items:
-        subtotal += item.get("qty", 0) * item.get("price", 0.0)
+        subtotal += item["qty"] * item["price"]
         if item.get("type") == "physical":
             has_physical = True
     return subtotal, has_physical
 
-def _get_coupon_discount(subtotal: float, coupon_code: Optional[str]) -> float:
-    """Calculates the discount amount based on the coupon code and subtotal."""
-    if not coupon_code:
-        return 0.0
+def _calculate_total_discount(subtotal: float, coupon: Optional[str], member: Optional[str]) -> float:
+    """
+    Aggregates coupon-based and membership-based discounts.
     
-    if coupon_code == "SAVE10":
-        return subtotal * DISCOUNT_SAVE10_RATE
-    if coupon_code == "WELCOME5":
-        return DISCOUNT_WELCOME5_VALUE if subtotal > DISCOUNT_WELCOME5_THRESHOLD else 0.0
-    if coupon_code == "HALF":
+    Args:
+        subtotal: The base subtotal amount.
+        coupon: The coupon code string.
+        member: The membership tier string.
+        
+    Returns:
+        The total discount amount as a float.
+    """
+    discount = 0.0
+    
+    # Coupon Logic
+    if coupon == "SAVE10":
+        discount = subtotal * DISCOUNT_SAVE10_RATE
+    elif coupon == "WELCOME5":
+        if subtotal > DISCOUNT_WELCOME5_THRESHOLD:
+            discount = DISCOUNT_WELCOME5_VALUE
+    elif coupon == "HALF":
         discount = subtotal * DISCOUNT_HALF_RATE
-        return min(discount, DISCOUNT_HALF_LIMIT)
-    return 0.0
+        if discount > DISCOUNT_HALF_LIMIT:
+            discount = DISCOUNT_HALF_LIMIT
+            
+    # Member Logic (Additive to coupon)
+    if member == "gold":
+        discount += subtotal * MEMBER_GOLD_RATE
+    elif member == "platinum":
+        discount += subtotal * MEMBER_PLATINUM_RATE
+        
+    return discount
 
-def _get_member_discount(subtotal: float, member_type: Optional[str]) -> float:
-    """Calculates the additional discount based on membership tier (Gold/Platinum)."""
-    if member_type == "gold":
-        return subtotal * MEMBER_GOLD_RATE
-    if member_type == "platinum":
-        return subtotal * MEMBER_PLATINUM_RATE
-    return 0.0
-
-def _get_shipping_fee(subtotal: float, has_physical: bool) -> float:
-    """Determines shipping cost based on subtotal and physical item presence."""
+def _calculate_shipping_fee(subtotal: float, has_physical: bool) -> float:
+    """
+    Determines shipping costs based on subtotal and item types.
+    
+    Args:
+        subtotal: The base subtotal amount.
+        has_physical: Boolean indicating if the order contains physical items.
+        
+    Returns:
+        The shipping fee as a float.
+    """
     if has_physical:
         return 0.0 if subtotal > SHIPPING_FREE_THRESHOLD else SHIPPING_STANDARD_FEE
     return 0.0
 
-def _get_tax_total(subtotal_after_discount: float, state_code: str) -> float:
-    """Calculates tax based on the state code and the subtotal after discounts."""
-    rates = {
-        "CA": TAX_RATE_CA,
-        "NY": TAX_RATE_NY,
-        "TX": TAX_RATE_TX
-    }
-    rate = rates.get(state_code, TAX_RATE_DEFAULT)
+def _calculate_tax_amount(subtotal_after_discount: float, state: str) -> float:
+    """
+    Computes tax based on the state and the post-discount subtotal.
+    
+    Args:
+        subtotal_after_discount: Subtotal after all discounts are applied.
+        state: The state code string.
+        
+    Returns:
+        The calculated tax amount as a float.
+    """
+    rate = TAX_RATES.get(state, TAX_RATE_DEFAULT)
     return subtotal_after_discount * rate
 
 
@@ -151,35 +185,33 @@ def _compute_invoice_total_v2(order: dict) -> dict:
         Dictionary with currency, subtotal, discount, shipping, tax, total,
         with all numerical values rounded to two decimal places.
     """
-    items = order.get("items", [])
-    coupon_code = order.get("coupon")
-    member_type = order.get("member")
-    state_code = order.get("state", "")
-
     # 1. Calculate base subtotal and physical status
-    subtotal, has_physical = _calculate_base_subtotal(items)
+    items = order.get("items", [])
+    subtotal, has_physical = _calculate_items_subtotal(items)
 
-    # 2. Calculate discounts (Coupon + Member)
-    coupon_discount = _get_coupon_discount(subtotal, coupon_code)
-    member_discount = _get_member_discount(subtotal, member_type)
-    total_discount = coupon_discount + member_discount
+    # 2. Calculate total discounts (Coupon + Member)
+    discount_amount = _calculate_total_discount(
+        subtotal, 
+        order.get("coupon"), 
+        order.get("member")
+    )
 
     # 3. Calculate shipping fee
-    shipping_fee = _get_shipping_fee(subtotal, has_physical)
+    shipping_fee = _calculate_shipping_fee(subtotal, has_physical)
 
     # 4. Calculate tax based on subtotal after all discounts
-    subtotal_after_discount = subtotal - total_discount
-    tax_total = _get_tax_total(subtotal_after_discount, state_code)
+    subtotal_after_discount = subtotal - discount_amount
+    tax_amount = _calculate_tax_amount(subtotal_after_discount, order.get("state", ""))
 
     # 5. Calculate final total
-    final_total = subtotal - total_discount + shipping_fee + tax_total
+    final_total = subtotal - discount_amount + shipping_fee + tax_amount
 
     return {
         "currency": CURRENCY_USD,
         "subtotal": round(subtotal, PRECISION_DECIMALS),
-        "discount": round(total_discount, PRECISION_DECIMALS),
+        "discount": round(discount_amount, PRECISION_DECIMALS),
         "shipping": round(shipping_fee, PRECISION_DECIMALS),
-        "tax": round(tax_total, PRECISION_DECIMALS),
+        "tax": round(tax_amount, PRECISION_DECIMALS),
         "total": round(final_total, PRECISION_DECIMALS)
     }
 
