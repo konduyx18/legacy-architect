@@ -278,7 +278,7 @@ The application uses carefully crafted system instructions and structured prompt
 **Gemini 3 Global Hackathon Entry**
 
 - **Category:** Agentic Workflows
-- **Devpost:** [Coming Soon]
+- **Devpost:** [Legacy Architect](https://devpost.com/software/legacy-architect)
 - **GitHub:** [https://github.com/konduyx18/legacy-architect](https://github.com/konduyx18/legacy-architect)
 - **Live Demo:** [https://legacy-architect.streamlit.app](https://legacy-architect.streamlit.app)
 
