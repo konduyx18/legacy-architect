@@ -238,7 +238,12 @@ Creates comprehensive documentation:
 
 ## 🎬 Demo Video
 
-📹 **Coming Soon:** Full walkthrough video demonstrating the autonomous refactoring workflow.
+[![Demo Video](https://img.youtube.com/vi/OW9HY--fAJE/maxresdefault.jpg)](https://youtu.be/OW9HY--fAJE)
+
+▶️ **[Watch the Full Demo on YouTube](https://youtu.be/OW9HY--fAJE)**
+
+3-minute walkthrough demonstrating the autonomous refactoring workflow powered by Gemini 3.
+
 
 ---
 
